@@ -1,187 +1,168 @@
 package aed;
-
+import java.util.Arrays;
 import java.util.Comparator;
 
-public class MinHeap<T extends Comparable<T>> {
-    private T[] _array;
-    private int _n;
-    private Comparator<T> comparator;
+public final class MinHeap<T> {
+    private T[] heap;
+    private int lastIndex;
+    private Comparator<? super T> comparator;
+    private static final int DEFAULT_CAPACITY = 100;
+    private boolean integrityOK = false;
 
-    // Constructor que recibe un comparador
-    public MinHeap(T[] array, int cardinal, Comparator<T> comparator) {
-        this._array = array;
-        this._n = cardinal;
+    @SuppressWarnings("unchecked")
+    public MinHeap(Comparator<? super T> comparator, int initialCapacity) {
         this.comparator = comparator;
-        this.heapify();
+        heap = (T[]) new Object[initialCapacity + 1];
+        lastIndex = 0;
+        integrityOK = true;
     }
 
-    public T[] cola() {
-        return this._array;
+    public MinHeap(Comparator<? super T> comparator) {
+        this(comparator, DEFAULT_CAPACITY);
     }
 
-    public int cardinal() {
-        return this._n;
-    }
+    // public void encolar(T newEntry) {
+    //     checkIntegrity();
+    //     int newIndex = lastIndex + 1;
+    //     int parentIndex = newIndex / 2;
 
-    public T proximo() {
-        return this._array[0];
-    }
-
-    public boolean pertenece(T elem) {
-        int i = 0;
-        while (i < this._n && this._array[i] != elem) {
-            i++;
-        }
-        return i < this._n;
-    }
-
-    public String toString() {
-        String res = "{";
-        for (int i = 0; i < this._n; i++) {
-            res += this._array[i].toString();
-            if (i != this._n - 1) {
-                res += ", ";
-            }
-        }
-        res += "}";
-        return res;
-    }
-
-    private void swap(int i, int j, T elem) {
-        T temp = this._array[i];
-        this._array[i] = this._array[j];
-        this._array[j] = temp;
-        if(elem instanceof Traslado){
-            ((Traslado) elem).setPosHeapAntiguo(i);
-        }
-    }
-    public void eliminar(int i) {
-        if (i < 0 || i >= this._n) {
-            throw new IndexOutOfBoundsException("Índice fuera de rango");
-        }
-        
-        T eliminado = this._array[i]; // Guardar el elemento a eliminar
-        this.swap(i, this._n - 1, eliminado); // Intercambiar con el último elemento
-        this._n--; // Reducir el tamaño del heap
-        
-        // Reequilibrar el heap
-        if (i > 0 && this.prioridad(i).compareTo(this.prioridad(padre(i))) < 0) {
-            this.subir(i); // Subir si es menor que su padre
-        } else {
-            this.bajar(i); // Bajar si es mayor que sus hijos
-        }
-    } 
-    
-
-    public static int padre(int i) {
-        return (i - 1) / 2;
-    }
-
-    private static int hijoIzq(int i) {
-        return 2 * i + 1;
-    }
-
-    private static int hijoDer(int i) {
-        return 2 * i + 2;
-    }
-
-    public T prioridad(int i) {
-        return this._array[i];
-    }
-
-    public void subir(int i) {
-        for (int p = padre(i); i != 0 && this.prioridad(i).compareTo(this.prioridad(p)) < 0; p = padre(i)) {
-            this.swap(i, p,_array[i]);
-            i = p;
-        }
-    }
-
-    private Boolean esHoja(int i) {
-        return hijoIzq(i) >= this._n;
-    }
-
-    public  void bajar(int i) {
-        for (int hi = hijoIzq(i), hd = hijoDer(i);
-             !(this.esHoja(i)) && (
-             (hi < this._n && this.prioridad(i).compareTo(prioridad(hi)) > 0) || 
-             (hd < this._n && this.prioridad(i).compareTo(prioridad(hd)) > 0));
-             hi = hijoIzq(i), hd = hijoDer(i)) {
-            
-            if ((hi < this._n && hd < this._n && prioridad(hi).compareTo(prioridad(hd)) < 0) ||
-                (hi < this._n && hd >= this._n)) {
-                this.swap(i, hi,_array[i]);
-                i = hi;
-            } else {
-                this.swap(i, hd,_array[i]);
-                i = hd;
-            }
-        }
-    }
-
-    // public void encolar(T elem) {
-    //     int cap = this._array.length;
-    //     int i = this._n;
-    //     if (i < cap) {
-    //         this._array[i] = elem;
-    //         this._n++;
-    //         this.subir(i);
+    //     while ((parentIndex > 0) &&
+    //            comparator.compare(newEntry, heap[parentIndex]) < 0) {  // Cambio para MinHeap
+    //         heap[newIndex] = heap[parentIndex];
+    //         newIndex = parentIndex;
+    //         parentIndex = newIndex / 2;
     //     }
+
+    //     heap[newIndex] = newEntry;
+    //     lastIndex++;
+    //     ensureCapacity();
     // }
-    public void encolar(T elem) {
-        int cap = this._array.length; // O(1)
-        int i = this._n; // O(1)
-        if (i >= cap) { // Si está lleno
-            expandirCapacidad(); // O(n)
-        }
-        this._array[i] = elem; // O(1)
-        this._n++; // O(1)
-        this.subir(i); // O(log(n))
-    } // O(log(n)) promedio, O(n) en peor caso por expansión
+    public void encolar(T newEntry) {
+        checkIntegrity();
+        int newIndex = lastIndex + 1;
+        int parentIndex = newIndex / 2;
     
-    private void expandirCapacidad() {
-        int nuevaCapacidad = this._array.length * 2; // Duplicar capacidad
-        T[] nuevoArray = (T[]) new Comparable[nuevaCapacidad]; // Crear nuevo array
-        System.arraycopy(this._array, 0, nuevoArray, 0, this._array.length); // Copiar elementos
-        this._array = nuevoArray; // Actualizar referencia
+        while ((parentIndex > 0) &&
+               comparator.compare(newEntry, heap[parentIndex]) < 0) { // MinHeap o MaxHeap
+            heap[newIndex] = heap[parentIndex];
+            if (heap[newIndex] instanceof Traslado) { 
+                ((Traslado) heap[newIndex]).setPosHeapAntiguo(newIndex); // Uso explícito de casting
+            }
+            newIndex = parentIndex;
+            parentIndex = newIndex / 2;
+        }
+    
+        heap[newIndex] = newEntry;
+        if (newEntry instanceof Traslado) { 
+            ((Traslado) newEntry).setPosHeapAntiguo(newIndex); // Uso explícito de casting
+        }
+        lastIndex++;
+        ensureCapacity();
     }
     
 
     public T desencolar() {
-        T res = this._array[0];
-        int i = this._n - 1;
-        this.swap(i, 0,_array[i]);
-        this._n--;
-        this.bajar(0);
-        return res;
-    }
+        checkIntegrity();
+        T root = null;
 
+        if (!isEmpty()) {
+            root = heap[1];
+            heap[1] = heap[lastIndex];
+            lastIndex--;
+            reheap(1);
+        }
+
+        return root;
+    }
+    private void reheap(int rootIndex) {
+        boolean done = false;
+        T orphan = heap[rootIndex];
+        int leftChildIndex = 2 * rootIndex;
     
+        while (!done && (leftChildIndex <= lastIndex)) {
+            int smallerChildIndex = leftChildIndex;
+            int rightChildIndex = leftChildIndex + 1;
     
-    public void heapify() {
-        for (int i = this._n - 1; i >= 0; i--) {
-            this.bajar(i);
+            if ((rightChildIndex <= lastIndex) &&
+                comparator.compare(heap[rightChildIndex], heap[smallerChildIndex]) < 0) { // MinHeap o MaxHeap
+                smallerChildIndex = rightChildIndex;
+            }
+    
+            if (comparator.compare(orphan, heap[smallerChildIndex]) > 0) { // MinHeap o MaxHeap
+                heap[rootIndex] = heap[smallerChildIndex];
+                if (heap[rootIndex] instanceof Traslado) {
+                    ((Traslado) heap[rootIndex]).setPosHeapAntiguo(rootIndex); // Uso explícito de casting
+                }
+                rootIndex = smallerChildIndex;
+                leftChildIndex = 2 * rootIndex;
+            } else {
+                done = true;
+            }
+        }
+    
+        heap[rootIndex] = orphan;
+        if (orphan instanceof Traslado) {
+            ((Traslado) orphan).setPosHeapAntiguo(rootIndex); // Uso explícito de casting
+        }
+    }
+    
+    // private void reheap(int rootIndex) {
+    //     boolean done = false;
+    //     T orphan = heap[rootIndex];
+    //     int leftChildIndex = 2 * rootIndex;
+
+    //     while (!done && (leftChildIndex <= lastIndex)) {
+    //         int smallerChildIndex = leftChildIndex;  // Cambiado de largerChildIndex a smallerChildIndex
+    //         int rightChildIndex = leftChildIndex + 1;
+
+    //         if ((rightChildIndex <= lastIndex) &&
+    //             comparator.compare(heap[rightChildIndex], heap[smallerChildIndex]) < 0) {  // Cambio para MinHeap
+    //             smallerChildIndex = rightChildIndex;
+    //         }
+
+    //         if (comparator.compare(orphan, heap[smallerChildIndex]) > 0) {  // Cambio para MinHeap
+    //             heap[rootIndex] = heap[smallerChildIndex];
+    //             rootIndex = smallerChildIndex;
+    //             leftChildIndex = 2 * rootIndex;
+    //         } else {
+    //             done = true;
+    //         }
+    //     }
+
+    //     heap[rootIndex] = orphan;
+    // }
+
+    private void ensureCapacity() {
+        if (lastIndex >= heap.length - 1) {
+            heap = Arrays.copyOf(heap, 2 * heap.length);
         }
     }
 
-    private class MinHeapIterador implements IteradorBase<T> {
-        private int _i;
-
-        public MinHeapIterador() {
-            this._i = 0;
-        }
-
-        public boolean haySiguiente() {
-            return this._i < _n;
-        }
-
-        public T siguiente() {
-            T res = _array[this._i];
-            this._i++;
-            return res;
+    private void checkIntegrity() {
+        if (!integrityOK) {
+            throw new SecurityException("Heap is corrupt.");
         }
     }
 
-    public IteradorBase<T> iterador() {
-        return new MinHeapIterador();
+    public boolean isEmpty() {
+        return lastIndex < 1;
+    }
+
+    public T getMin() {
+        if (!isEmpty()) {
+            return heap[1];
+        }
+        return null;
+    }
+
+    public int getCardinal() {
+        return lastIndex;  // Retorna el número de elementos en el heap
+    }
+    public void eliminarPorPosicion(int posicion) {
+        if (posicion <= lastIndex && posicion > 0) {
+            heap[posicion] = heap[lastIndex];
+            lastIndex--;
+            reheap(posicion);
+        }
     }
 }

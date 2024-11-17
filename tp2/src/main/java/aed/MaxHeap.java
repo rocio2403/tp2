@@ -1,195 +1,140 @@
+
 package aed;
+import java.util.Arrays;
 import java.util.Comparator;
 
+public final class MaxHeap<T> {
+    public T[] heap;
+    private int cardinal;
+    private Comparator<? super T> comparator;
+    private static final int cap_default = 100;
+    private boolean integrityOK = false;
 
-public class MaxHeap<T extends Comparable<T>> {
-    private T[] array;
-    private int longitud;
-    private Comparator<T> comparator;
-
-
-    public MaxHeap(T[] array, int cardinal,Comparator<T> comparator ) { // Constructor por heapify // buildHeap // Algoritmo de Floyd
-        this.array = array; // O(n)
-        this.longitud = cardinal; // O(1)
-        this.heapify(); // O(n)
+    @SuppressWarnings("unchecked")
+    public MaxHeap(Comparator<? super T> comparator, int initialCapacity) {
         this.comparator = comparator;
-    } // O(n)
+        heap = (T[]) new Object[initialCapacity + 1];
+        cardinal = 0;
+        integrityOK = true;
+    } // lo inicializo vacio
 
-    public int compare(T a, T b) {
-        return (comparator != null) ? comparator.compare(a, b) : a.compareTo(b);
-    }
-
-    public T[] cola() {
-        return this.array; // O(1)
-    } // O(1)
-
-    public int cardinal() {
-        return this.longitud; // O(1)
-    } // O(1)
-
-    public T proximo() {
-        return this.array[0]; // O(1)
-    } // O(1)
-
-    public boolean pertenece(T elem) { // búsqueda lineal
-        int i = 0; // O(1)
-        while (i < this.longitud && this.array[i] != elem) { // O(1)
-            i++; // O(1)
-        } // O(n)
-        return i < this.longitud; // O(1)
-    } // O(n)
-
-    public String toString() {
-        String res = "{"; // O(1)
-        for (int i = 0; i < this.longitud; i++) {
-            res += this.array[i].toString(); // O(1)
-            if (i != this.longitud - 1) { // O(1)
-                res += ", "; // O(1)
+    public MaxHeap(Comparator<? super T> comparator) {
+        this(comparator, cap_default);
+    } //lo inicilaizo con un comparador y una capacidad inicial
+    public void encolar(T newEntry) {
+        checkIntegrity();
+        int newIndex = cardinal + 1;
+        int parentIndex = newIndex / 2;
+    
+        while ((parentIndex > 0) &&
+               comparator.compare(newEntry, heap[parentIndex]) > 0) { // MaxHeap: prioridad a valores mayores
+            heap[newIndex] = heap[parentIndex];
+            if (heap[newIndex] instanceof Traslado) { 
+                ((Traslado) heap[newIndex]).setPosRedituable(newIndex); // Actualiza posición para el MaxHeap
             }
-        } // O(n)
-        res += "}"; // O(1)
-        return res; // O(1)
-    } // O(n)
-
-    public void swap(int i, int j) {
-        T temp = this.array[i]; // O(1)
-        this.array[i] = this.array[j]; // O(1)
-        this.array[j] = temp; // O(1)
-
-       
-    
-    } // O(1)
-
-   
-    
-    public  static int padre(int i) {
-        return (i - 1)/2; // O(1)
-    } // O(1)
-
-    private static int hijoIzq(int i) {
-        return 2*i + 1; // O(1)
-    } // O(1)
-
-    private static int hijoDer(int i) {
-        return 2*i + 2; // O(1)
-    } // O(1)
-
-    public T prioridad(int i) {
-        return this.array[i]; // O(1)
-    } // O(1)
-
-    public void subir(int i) {
-        for (int p = padre(i); i != 0 && compare(this.prioridad(i), this.prioridad(p)) > 0; p = padre(i)) { // O(1)
-            this.swap(i, p); // O(1)
-            i = p; // O(1)
-        } // O(log(n))
-    } // O(log(n))
-
-    private Boolean esHoja(int i) {
-        return hijoIzq(i) >= this.longitud; // O(1)
-    } // O(1)
-    public T eliminar(int i) {
-        if (i < 0 || i >= this.longitud) {
-            throw new IndexOutOfBoundsException("Índice fuera de los límites.");
+            if (heap[newIndex] instanceof Ciudad) {
+                ((Ciudad) heap[newIndex]).setPosHeapSuperavit(newIndex); // Actualiza posición para el MaxHeap
+            }
+            newIndex = parentIndex;
+            parentIndex = newIndex / 2;
         }
-        
-        T eliminado = this.array[i]; // Guardar el elemento a eliminar
-        this.swap(i, this.longitud - 1); // Intercambiar con el último elemento
-        this.longitud--; // Reducir el tamaño del heap
-        
-        // Verificar si es necesario bajar o subir el elemento
-        if (i > 0 && compare(this.prioridad(i), this.prioridad(padre(i))) > 0) {
-            subir(i); // Subir si es mayor que su padre
-        } else {
-            bajar(i); // Bajar si no cumple la propiedad de max-heap
+    
+        heap[newIndex] = newEntry;
+        if (newEntry instanceof Traslado) { 
+            ((Traslado) newEntry).setPosRedituable(newIndex);// Actualiza posición para el MaxHeap
         }
-        
-        return eliminado; // Retornar el elemento eliminado
+        if (newEntry instanceof Ciudad) {
+            ((Ciudad) newEntry).setPosHeapSuperavit(newIndex); // Actualiza posición para el MaxHeap
+        }
+        cardinal++;
+        masCap();
     }
     
-    public void bajar(int i) { // A.k.a. "percolar"
-        for (int hi = hijoIzq(i), hd = hijoDer(i); 
-            !(this.esHoja(i)) && (
-            (hi < this.longitud && compare(this.prioridad(i), prioridad(hi)) < 0) || 
-            (hd < this.longitud && compare(this.prioridad(i), prioridad(hd)) < 0));
-
-            hi = hijoIzq(i), hd = hijoDer(i)) { // O(1)
-
-            if ((hi < this.longitud && hd < this.longitud&& compare(prioridad(hi), prioridad(hd)) > 0) ||
-                (hi < this.longitud && hd >= this.longitud)) { // O(1)
-                this.swap(i, hi); // O(1)
-                i = hi; // O(1)
+    private void reheap(int rootIndex) {
+        boolean done = false;
+        T orphan = heap[rootIndex];
+        int leftChildIndex = 2 * rootIndex;
+    
+        while (!done && (leftChildIndex <= cardinal)) {
+            int largerChildIndex = leftChildIndex;
+            int rightChildIndex = leftChildIndex + 1;
+    
+            if ((rightChildIndex <= cardinal) &&
+                comparator.compare(heap[rightChildIndex], heap[largerChildIndex]) > 0) { // MaxHeap: mayor prioridad a valores más altos
+                largerChildIndex = rightChildIndex;
+            }
+    
+            if (comparator.compare(orphan, heap[largerChildIndex]) < 0) { // MaxHeap: si el hijo es mayor, intercambiar
+                heap[rootIndex] = heap[largerChildIndex];
+                if (heap[rootIndex] instanceof Traslado) {
+                    ((Traslado) heap[rootIndex]).setPosRedituable(rootIndex); // Uso explícito de casting
+                }
+                rootIndex = largerChildIndex;
+                leftChildIndex = 2 * rootIndex;
             } else {
-                this.swap(i, hd); // O(1)
-                i = hd; // O(1)
+                done = true;
             }
-        } // O(log(n))
-    } // O(log(n))
-
-    // public void encolar(T elem) { // insertar
-    //     int cap = this.array.length; // O(1)
-    //     int i = this.longitud; // O(1)
-    //     if (i < cap) { // O(1)
-    //         this.array[i] = elem; // O(1)
-    //         this.longitud++; // O(1)
-    //         this.subir(i); // O(log(n))
-    //     }
-    // } // O(log(n))
-    public void encolar(T elem) { // insertar
-        int cap = this.array.length; // O(1)
-        int i = this.longitud; // O(1)
-        if (i >= cap) { // Si está lleno
-            expandirCapacidad(); // O(n)
         }
-        this.array[i] = elem; // O(1)
-        this.longitud++; // O(1)
-        this.subir(i); // O(log(n))
-    } // O(log(n)) promedio, O(n) en peor caso por la expansión
     
-    private void expandirCapacidad() {
-        int nuevaCapacidad = this.array.length * 2; // Duplicar capacidad
-        T[] nuevoArray = (T[]) new Comparable[nuevaCapacidad]; // Crear nuevo array
-        System.arraycopy(this.array, 0, nuevoArray, 0, this.array.length); // Copiar elementos al nuevo array
-        this.array = nuevoArray; // Actualizar referencia
+        heap[rootIndex] = orphan;
+        if (orphan instanceof Traslado) {
+            ((Traslado) orphan).setPosRedituable(rootIndex); // Actualiza posición para el MaxHeap
+        }
     }
     
 
-    public T desencolar() { // eliminar
-        T res = this.array[0]; // O(1)
-        int i = this.longitud - 1; // O(1)
-        this.swap(i, 0); // O(1)
-        this.longitud--; // O(1)
-        this.bajar(0); // O(log(n))
-        return res;
-    } // O(log(n))
+    public T desencolar() {
+        checkIntegrity();
+        T root = null;
 
-    private void heapify() { // buildHeap // Algoritmo de Floyd (yewtu.be/watch?v=C8IqJshhVbg)
-        for (int i = this.longitud - 1; i >= 0; i--) {
-            this.bajar(i);
+        if (!isEmpty()) {
+            root = heap[1];
+            heap[1] = heap[cardinal];
+            cardinal--;
+            reheap(1);
         }
-    } // Por lo analizado en teórica, O(n)
 
-    private class MaxHeapIterador implements IteradorBase<T> {
-    	private T[] array = this.array;
-        private int longitud = this.longitud;
-        private int _i;
+        return root;
+    } 
 
-        public MaxHeapIterador() {
-            this._i = 0; // O(1)
-        } // O(1)
-
-        public boolean haySiguiente() {
-            return this._i < this.longitud; // O(1)
-        } // O(1)
-
-        public T siguiente() {
-            T res = this.array[this._i]; // O(1)
-            this._i++; // O(1)
-            return res;
-        } // O(1)
+    private void masCap() {
+        if (cardinal >= heap.length - 1) {
+            heap = Arrays.copyOf(heap, 2 * heap.length);
+        }
     }
 
-    public IteradorBase<T> iterador() {
-        return new MaxHeapIterador(); // O(1)
-    } // O(1)
+    private void checkIntegrity() {
+        if (!integrityOK) {
+            throw new SecurityException("Problemas con heap :( )");
+        }
+    }
+
+    public boolean isEmpty() {
+        return cardinal < 1;
+    }
+
+    public T getMax() {
+        if (!isEmpty()) {
+            return heap[1];
+        }
+        return null;
+    }
+    public int getCardinal() {
+        return cardinal;  // Retorna el número de elementos en el heap
+    }
+    public void eliminarPorPosicion(int posicion) {
+        if (posicion <= cardinal && posicion > 0) {
+            heap[posicion] = heap[cardinal];
+            cardinal--;
+            reheap(posicion);
+        }
+    }
+    public void rechequear(int pos) {
+        checkIntegrity();
+        reheap(pos); // Ajusta hacia arriba o hacia abajo según el nuevo valor
+    }
+    
+    
+    
+    
 }

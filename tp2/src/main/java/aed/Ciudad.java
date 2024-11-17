@@ -1,18 +1,27 @@
 package aed;
 
 public class Ciudad implements Comparable<Ciudad> {
-    private  int id;           
-    private int perdidas;  
-    private int ganancias; 
-    private int superavit;   
+    private int id;
+    private int perdidas;
+    private int ganancias;
+    private int superavit;
+    private int posHeapSuperavit; // Nueva variable para almacenar la posición en el heap
 
-
-    public Ciudad(int id, int perdidas, int ganancias, int superavit){
+    public Ciudad(int id, int perdidas, int ganancias, int superavit) {
         this.id = id;
         this.perdidas = perdidas;
         this.ganancias = ganancias;
         this.superavit = superavit;
-    } 
+        this.posHeapSuperavit = -1; // Valor inicial, -1 significa que no está en el heap
+    }
+
+    public int getPosHeapSuperavit() {
+        return posHeapSuperavit;
+    }
+
+    public void setPosHeapSuperavit(int pos) {
+        this.posHeapSuperavit = pos;
+    }
     public int getId() {
         return id;
     }
@@ -30,12 +39,12 @@ public class Ciudad implements Comparable<Ciudad> {
     }
 
     public void agregarGanancias(int monto) {
-        ganancias += monto;
+        this.ganancias += monto;
         actualizarSuperavit();
     }
 
     public void agregarPerdidas(int monto) {
-        perdidas += monto;
+        this.perdidas += monto;
         actualizarSuperavit();
     }
 

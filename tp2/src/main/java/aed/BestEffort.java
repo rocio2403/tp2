@@ -5,8 +5,8 @@ import java.util.Comparator;
 
 public class BestEffort {
     private ArrayList<Ciudad> ciudades;
-    private MaxHeap<Traslado> heapRedituable; 
-    private MinHeap<Traslado> heapAntiguo;    
+    public  MaxHeap<Traslado> heapRedituable; 
+    public MinHeap<Traslado> heapAntiguo;    
     private ArrayList<Integer> mayorGanancia; 
     private  ArrayList<Integer> mayorPerdida;  
     private MaxHeap<Ciudad> heapSuperavit;
@@ -17,20 +17,32 @@ public class BestEffort {
     public BestEffort(int cantCiudades, Traslado[] traslados) {
         this.ciudades = new ArrayList<>(cantCiudades);
         for (int i = 0; i < cantCiudades; i++) {
-            ciudades.add(new Ciudad(i,0,0,0)); 
+            ciudades.add(new Ciudad(i, 0, 0, 0)); 
         } 
-
-        Comparator<Traslado> gananciaComparar = Comparator.comparing(Traslado :: getGananciaNeta);
-        this.heapRedituable = new MaxHeap<>(traslados, traslados.length, gananciaComparar); //O(|T|) algoritmo de Floyd
+    
+        // Definir comparadores
+        Comparator<Traslado> comparadorPorGN = comparatorTraslados.comparadorPorGanancia;
+        this.heapRedituable = new MaxHeap<>(comparadorPorGN, traslados.length); // Iniciar con la cantidad de traslados
+    
+        Comparator<Traslado> timeStampComparar = comparatorTraslados.comparadorPorTimestamp;
+        this.heapAntiguo = new MinHeap<>(timeStampComparar, traslados.length); // Iniciar con la cantidad de traslados
         
-        Comparator<Traslado> timeStampComparar = Comparator.comparing(Traslado :: getTimestamp);
-        this.heapAntiguo = new MinHeap<>(traslados, traslados.length,timeStampComparar); //O(|T|) algoritmo de Floyd
+        // Añadir los traslados a los heaps
+        for (Traslado t : traslados) {
+            heapRedituable.encolar(t);
+            heapAntiguo.encolar(t);
+        }
+    
+        // Comparador por Superavit para el MaxHeap de ciudades
+        Comparator<Ciudad> comparadorPorSuperavit = Comparator.comparing(Ciudad::getSuperavit).reversed();
+        this.heapSuperavit = new MaxHeap<>(comparadorPorSuperavit, cantCiudades); // Iniciar con la cantidad de ciudades
+    
+        // Añadir ciudades al heap
+        for (Ciudad ciudad : ciudades) {
+            heapSuperavit.encolar(ciudad);
+        }
         
-        Ciudad[] arrayCiudades = ciudades.toArray(new Ciudad[0]);
-        Comparator<Ciudad> superavitComparar = Comparator.comparing(Ciudad::getSuperavit);
-        this.heapSuperavit = new MaxHeap<>(arrayCiudades, cantCiudades,superavitComparar); //O(|C|)
-       
-        this.mayorSuperavit = 0;
+        this.mayorSuperavit = -1;
 
         this.mayorGanancia = new ArrayList<Integer>(); //Las actualizo con el auxiliar de abajo
         this.mayorPerdida = new ArrayList<Integer>();
@@ -40,6 +52,7 @@ public class BestEffort {
        
     }// Complejidad final = O(|C|+ |T|)
 
+    
 
 
     public void registrarTraslados(Traslado[] traslados){
@@ -56,19 +69,21 @@ public class BestEffort {
         int[] res = new int[n]; //renombrar //O(n)
         int[] indices = new int[n];
 
-        while (i < n && heapRedituable.cardinal() > 0){
+        while (i < n && heapRedituable.getCardinal() > 0){
             Traslado t = heapRedituable.desencolar();  //O(log(T))
            
             res[i] = t.getId();    
             actualizarInfoCiudad(t);    //O(Log(C))   Aca actualizo ambos heaps y la informacion de la lista de superavit  
-            maxSuperavit(); //O(1)      
-           // indices[i] =t.getPosAntiguo();
+             
+           indices[i] =t.getPosAntiguo();
            
             
             i++;
         } //Complejidad bucle = O(n(log(T) + log(C)))
-      //  sincronizarHeapAntiguo(indices);
+       
+       sincronizarHeapAntiguo(indices);
         actualizarListaGananciasYPerdidas(); //O(|C|)
+       // maxSuperavit();
         return res ;
        //Complejidad = O(|C|) + O(n(Log(T) + log(C))) =  O(n(logT + logC))
     }
@@ -76,20 +91,21 @@ public class BestEffort {
     public int[] despacharMasAntiguos(int n){
         int i = 0;
         int[] res = new int[n]; //renombrar
-       
-        while (i< n && heapAntiguo.cardinal() > 0){
+        int[] indices = new int[n];
+        while (i< n && heapAntiguo.getCardinal() > 0){
             Traslado t  = this.heapAntiguo.desencolar(); // O(log(T))
               // O(1)
-            
+            indices[i]=t.getPosRedituable();
             
             res[i] = t.getId();    
             actualizarInfoCiudad(t);    //O(Log(C)) 
-            maxSuperavit(); //O(1)
+           
 
             i++;
         }   //Complejidad bucle = O(n(log(T) + log(C)))
-        
+        sincronizarHeapRedituable(indices);
         actualizarListaGananciasYPerdidas(); //O(|C|)
+       
         return res ;
     } //Complejidad = O(|C|) + O(n(Log(T) + log(C))) =  O(n(logT + logC))
 
@@ -161,7 +177,8 @@ public class BestEffort {
         int perdida = t.getGananciaNeta();//O(1)
         
         this.ciudades.get(indiceCiudadGana).agregarGanancias(ganancia); //O(1)
-        this.ciudades.get(indiceCiudadPierde).agregarPerdidas(perdida); //O(1)
+        this.ciudades.get(indiceCiudadPierde).agregarPerdidas(perdida); //O(1) //agregar ganancias y perdidas ya actualiza el superavit
+        //solo hay que heapificar
         
         cantGanancia += ganancia; //O(1)
         cantTraslados++;//O(1)
@@ -171,124 +188,41 @@ public class BestEffort {
         
     } //Complejidad = O(log(C))
 
-    public void actualizarSuperavit(int indiceCiudad) {
-        int altura = this.heapSuperavit.cardinal();
-        Ciudad[] arregloHeap = this.heapSuperavit.cola();
-        if (indiceCiudad >= 0 && indiceCiudad < altura) {
-            arregloHeap[indiceCiudad].actualizarSuperavit();
-    
-            if (heapSuperavit.compare(heapSuperavit.prioridad(indiceCiudad), heapSuperavit.prioridad(MaxHeap.padre(indiceCiudad))) > 0) {
-                heapSuperavit.subir(indiceCiudad); // O(log(C))
-            } else {
-                heapSuperavit.bajar(indiceCiudad); // O(log(C))
-            }
+      private void sincronizarHeapAntiguo(int[] indices){
+        //en esta funcion le paso los elementos a borrar
+        for(int index : indices){
+            this.heapAntiguo.eliminarPorPosicion(index);
+
         }
-    } // Complejidad: O(log(C))
+    }
+
+    private void sincronizarHeapRedituable(int[] indices){
+        //en esta funcion le paso los elementos a borrar
+        for(int index : indices){
+            this.heapRedituable.eliminarPorPosicion(index);
+
+        }
+    }
+
+    public void actualizarSuperavit(int indiceCiudad) {
+    }
     
     
+//En caso de empate, devuelve la que tiene menor identificador
     private void maxSuperavit(){
-        Ciudad candidato = heapSuperavit.proximo(); //O(1)
-        if(this.ciudades.get(this.mayorSuperavit).getSuperavit() < candidato.getSuperavit()){
+        Ciudad candidato = heapSuperavit.getMax(); //O(1)
+        int actual= this.ciudades.get(this.mayorSuperavit).getSuperavit();
+        if(actual < candidato.getSuperavit()){
             this.mayorSuperavit = candidato.getId();
         }
-        else if(this.ciudades.get(this.mayorSuperavit).getSuperavit() == candidato.getSuperavit()){
+        else if(actual == candidato.getSuperavit()){
             if(candidato.getId()<this.mayorSuperavit ){
                 this.mayorSuperavit = candidato.getId();
             }
-        }
-    }//O(1)
-
-    private void sincronizarHeapAntiguo(int[] indices){
-        //en esta funcion le paso los elementos a borrar
-        for(int index : indices){
-            this.heapAntiguo.eliminar(index);
-
-        }
+        }   
+    //O(1)
     }
-
-    private void sincronizarTrasladosEnMaxHeap(ArrayList<Integer> cambios){
-        for (int i = 0; i < cambios.size(); i++) {
-           int posicionActualizada = cambios.get(i);
-           Traslado t = this.heapRedituable.prioridad(posicionActualizada);
-           t.setPosRedituable(posicionActualizada);   
-        } 
-    }
-
-    private void sincronizarTrasladosEnMinHeap(ArrayList<Integer> cambios){
-        for (int i = 0; i < cambios.size(); i++) {
-           int posicionActualizada = cambios.get(i);
-           Traslado t = this.heapAntiguo.prioridad(posicionActualizada);
-           t.setPosRedituable(posicionActualizada);   
-        } 
-    }
-    
-    
-    // private void actualizarListaGananciasYPerdidas() { 
-    //     int mayorGananciaActual = Integer.MIN_VALUE; 
-    //     int mayorPerdidaActual = Integer.MIN_VALUE;
-    
-    //     mayorGanancia.clear();
-    //     mayorPerdida.clear();
-    
-    //     for (Ciudad ciudad : ciudades) { // O(C)
-    //         int ganancia = ciudad.getGanancias();
-    //         if (ganancia > mayorGananciaActual) {
-    //             mayorGananciaActual = ganancia;
-    //             mayorGanancia.clear(); // Limpiar y agregar nueva mejor ganancia
-    //             mayorGanancia.add(ciudad.getId());
-    //         } else if (ganancia == mayorGananciaActual) {
-    //             mayorGanancia.add(ciudad.getId());
-    //         }
-    
-    //         int perdida = ciudad.getPerdidas();
-    //         if (perdida > mayorPerdidaActual) {
-    //             mayorPerdidaActual = perdida;
-    //             mayorPerdida.clear(); // Limpiar y agregar nueva mejor pérdida
-    //             mayorPerdida.add(ciudad.getId());
-    //         } else if (perdida == mayorPerdidaActual) {
-    //             mayorPerdida.add(ciudad.getId());
-    //         }
-    //     }
-    // }
-    
-    // private void actualizarListaGananciasYPerdidas() { 
-    //     int mayorGananciaActual = -1; 
-    //     int mayorPerdidaActual = -1;
-    
-    //     // Verifica si las listas actuales no están vacías y obtén el valor máximo.
-    //     if (!mayorGanancia.isEmpty()) {
-    //         int idCiudadGanancia = mayorGanancia.get(0);
-    //         mayorGananciaActual = ciudades.get(idCiudadGanancia).getGanancias();
-    //     }
-    //     if (!mayorPerdida.isEmpty()) {
-    //         int idCiudadPerdida = mayorPerdida.get(0);
-    //         mayorPerdidaActual = ciudades.get(idCiudadPerdida).getPerdidas();
-    //     }
-    
-    //     // Itera por todas las ciudades para encontrar la mayor ganancia y pérdida.
-    //     for (Ciudad ciudad : ciudades) { // O(C)
-    //         int ganancia = ciudad.getGanancias();
-    //         if (ganancia > mayorGananciaActual) {
-    //             mayorGananciaActual = ganancia;
-    //             mayorGanancia.clear(); // Nueva ganancia máxima, reinicia la lista.
-    //             mayorGanancia.add(ciudad.getId());
-    //         } else if (ganancia == mayorGananciaActual) {
-    //             mayorGanancia.add(ciudad.getId()); // Misma ganancia máxima, añade el ID.
-    //         }
-    
-    //         int perdida = ciudad.getPerdidas();
-    //         if (perdida > mayorPerdidaActual) {
-    //             mayorPerdidaActual = perdida;
-    //             mayorPerdida.clear(); // Nueva pérdida máxima, reinicia la lista.
-    //             mayorPerdida.add(ciudad.getId());
-    //         } else if (perdida == mayorPerdidaActual) {
-    //             mayorPerdida.add(ciudad.getId()); // Misma pérdida máxima, añade el ID.
-    //         }
-    //     }
-    // }
-    // Método para eliminar un traslado de heapAntiguo
-
-    
+}    
     
         
-}
+

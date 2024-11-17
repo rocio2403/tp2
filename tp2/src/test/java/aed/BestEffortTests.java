@@ -220,8 +220,110 @@ public class BestEffortTests {
         // assertEquals(2, sis.ciudadConMayorSuperavit());
 
     }
+             
+            //     // Ejemplo de traslados
+            //     Traslado[] traslados = {
+            //         new Traslado(1, 0, 1, 300, 10),
+            //         new Traslado(2, 1, 2, 200, 20),
+            //         new Traslado(3, 2, 3, 400, 30),
+            //         new Traslado(4, 3, 4, 100, 40),
+            //     };
+        
+            //     // Ejemplo de ciudades
+            //     Ciudad[] ciudades = {
+            //         new Ciudad(0, 1000, 800,800),
+            //         new Ciudad(1, 1200, 1000,1000),
+            //         new Ciudad(2, 800, 700,700),
+            //         new Ciudad(3, 1500, 1400,1400),
+            //     };
+        
+            //     // Crear MaxHeap para traslados redituables
+            //     Comparator<Traslado> comparadorPorGanancia = Comparator.comparing(Traslado::getGananciaNeta).reversed();
+            //     MaxHeap<Traslado> heapRedituable = new MaxHeap<>(comparadorPorGanancia);
+        
+            //     for (Traslado traslado : traslados) {
+            //         heapRedituable.add(traslado);
+            //     }
+        
+            //     System.out.println("Heap Redituable (por ganancia neta):");
+            //     while (!heapRedituable.isEmpty()) {
+            //         System.out.println(heapRedituable.removeMax());
+            //     }
+        
+            //     // Crear MaxHeap para ciudades con mayor superávit
+            //     Comparator<Ciudad> comparadorPorSuperavit = Comparator.comparing(Ciudad::getSuperavit).reversed();
+            //     MaxHeap<Ciudad> heapSuperavit = new MaxHeap<>(comparadorPorSuperavit);
+        
+            //     for (Ciudad ciudad : ciudades) {
+            //         heapSuperavit.add(ciudad);
+            //     }
+        
+            //     System.out.println("\nHeap Superavit (por superávit):");
+            //     while (!heapSuperavit.isEmpty()) {
+            //         System.out.println(heapSuperavit.removeMax());
+            //     }
+            // }
+            // Traslado[] traslados = {
+            //     new Traslado(1, 0, 1, 100, 5),
+            //     new Traslado(2, 1, 2, 200, 3),
+            //     new Traslado(3, 2, 3, 50, 8),
+            //     new Traslado(4, 3, 4, 300, 2)
+            // };
+    
+            // // Heap por ganancia neta
+            // Comparator<Traslado> comparadorPorGN = comparatorTraslados.comparadorPorGanancia;
+            // MaxHeap<Traslado> heapPorGanancia = new MaxHeap<>(comparadorPorGN);
+            // for (Traslado t : traslados) {
+            //     heapPorGanancia.add(t);
+            // }
+    
+            // System.out.println("Heap por Ganancia Neta:");
+            // while (!heapPorGanancia.isEmpty()) {
+            //     System.out.println(heapPorGanancia.removeMax());
+            // }
+    
+            // // Heap por timestamp (usando un comparador)
+            // Comparator<Traslado> comparadorPorTimestamp = comparatorTraslados.comparadorPorTimestamp;
+            // MaxHeap<Traslado> heapPorTimestamp = new MaxHeap<>(comparadorPorTimestamp);
+    
+            // for (Traslado t : traslados) {
+            //     heapPorTimestamp.add(t);
+            // }
+    
+            // System.out.println("\nHeap por Timestamp:");
+            // while (!heapPorTimestamp.isEmpty()) {
+            //     System.out.println(heapPorTimestamp.removeMax());
+            
+       
+
+} //ANDAN MAL LOS COMPARADORES
+
+//     public static void main(String[] args) {
+//     // Crear objetos Traslado
+//     Traslado t1 = new Traslado(1, 0, 1, 100, 5);
+//     Traslado t2 = new Traslado(2, 1, 2, 200, 3);
+//     Traslado t3 = new Traslado(3, 2, 3, 50, 8);
+//     Traslado t4 = new Traslado(4, 3, 4, 300, 2);
+
+//     // Crear comparadores
+//     Comparator<Traslado> gananciaComparar = Comparator.comparing(Traslado::getGananciaNeta);
+//     Comparator<Traslado> timeStampComparar = Comparator.comparing(Traslado::getTimestamp);
+
+//     // Imprimir resultados de las comparaciones
+//     System.out.println("Comparador de ganancia (t2 vs t1): " + gananciaComparar.compare(t2, t1)); // Debería ser positivo
+//     System.out.println("Comparador de ganancia (t3 vs t4): " + gananciaComparar.compare(t3, t4)); // Debería ser negativo
+//     System.out.println("Comparador de timestamp (t2 vs t4): " + timeStampComparar.compare(t2, t4)); // Debería ser positivo
+//     System.out.println("Comparador de timestamp (t3 vs t1): " + timeStampComparar.compare(t3, t1)); // Debería ser positivo
+
+//     // Verificar comparadores inversos
+//     Comparator<Traslado> inversoGanancia = gananciaComparar.reversed();
+//     Comparator<Traslado> inversoTimestamp = timeStampComparar.reversed();
+
+//     System.out.println("Comparador de ganancia inverso (t1 vs t2): " + inversoGanancia.compare(t1, t2)); // Debería ser negativo
+//     System.out.println("Comparador de timestamp inverso (t4 vs t2): " + inversoTimestamp.compare(t4, t2)); // Debería ser negativo
+// }
    
-}
+
   
     
 
